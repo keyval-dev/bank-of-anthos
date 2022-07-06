@@ -16,9 +16,6 @@
 
 package anthos.samples.bankofanthos.balancereader;
 
-import com.google.cloud.MetadataConfig;
-import io.micrometer.stackdriver.StackdriverConfig;
-import io.micrometer.stackdriver.StackdriverMeterRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PreDestroy;
@@ -70,62 +67,5 @@ public class BalanceReaderApplication {
     @PreDestroy
     public void destroy() {
         LOGGER.info("BalanceReader service shutting down");
-    }
-
-    /**
-     * Initializes Meter Registry with custom Stackdriver configuration
-     *
-     * @return the StackdriverMeterRegistry with configuration
-     */
-    @Bean
-    public static StackdriverMeterRegistry stackdriver() {
-        return StackdriverMeterRegistry.builder(new StackdriverConfig() {
-            @Override
-            public boolean enabled() {
-                boolean enableMetricsExport = true;
-
-                if (System.getenv("ENABLE_METRICS") != null
-                    && System.getenv("ENABLE_METRICS").equals("false")) {
-                    enableMetricsExport = false;
-                }
-
-                LOGGER.info(String.format("Enable metrics export: %b",
-                    enableMetricsExport));
-                return enableMetricsExport;
-            }
-
-
-            @Override
-            public String projectId() {
-                String id = MetadataConfig.getProjectId();
-                if (id == null) {
-                    id = "";
-                }
-                return id;
-            }
-
-            @Override
-            public String get(String key) {
-                return null;
-            }
-            @Override
-            public String resourceType() {
-                return "k8s_container";
-            }
-
-            @Override
-            public Map<String, String> resourceLabels() {
-                Map<String, String> map = new HashMap<>();
-                String podName = System.getenv("HOSTNAME");
-                String containerName = podName.substring(0,
-                    podName.indexOf("-"));
-                map.put("location", MetadataConfig.getZone());
-                map.put("container_name", containerName);
-                map.put("pod_name", podName);
-                map.put("cluster_name", MetadataConfig.getClusterName());
-                map.put("namespace_name", System.getenv("NAMESPACE"));
-                return map;
-            }
-        }).build();
     }
 }

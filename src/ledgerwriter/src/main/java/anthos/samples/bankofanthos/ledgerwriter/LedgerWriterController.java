@@ -25,8 +25,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
-import io.micrometer.stackdriver.StackdriverMeterRegistry;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,7 +77,6 @@ public final class LedgerWriterController {
     @Autowired
     public LedgerWriterController(
             JWTVerifier verifier,
-            StackdriverMeterRegistry meterRegistry,
             TransactionRepository transactionRepository,
             TransactionValidator transactionValidator,
             @Value("${LOCAL_ROUTING_NUM}") String localRoutingNum,
@@ -97,7 +94,6 @@ public final class LedgerWriterController {
                             .recordStats()
                             .expireAfterWrite(1, TimeUnit.HOURS)
                             .build();
-        GuavaCacheMetrics.monitor(meterRegistry, this.cache, "Guava");
     }
 
     /**

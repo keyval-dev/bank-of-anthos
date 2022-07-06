@@ -72,24 +72,8 @@
             <version>3.3.0</version>
         </dependency>
         <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>spring-cloud-gcp-starter-trace</artifactId>
-            <version>3.3.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-stackdriver</artifactId>
-            <version>1.9.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -161,7 +145,7 @@
                 <version>3.2.1</version>
                 <configuration>
                     <from>
-                        <image>openjdk:17</image>
+                        <image>docker://openjdk:17</image>
                     </from>
                 </configuration>
             </plugin>

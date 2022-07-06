@@ -21,8 +21,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
-import io.micrometer.stackdriver.StackdriverMeterRegistry;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.concurrent.ExecutionException;
@@ -69,7 +67,6 @@ public final class TransactionHistoryController {
      */
     @Autowired
     public TransactionHistoryController(LedgerReader reader,
-            StackdriverMeterRegistry meterRegistry,
             JWTVerifier verifier,
             @Value("${PUB_KEY_PATH}") final String publicKeyPath,
             LoadingCache<String, Deque<Transaction>> cache,
@@ -80,7 +77,6 @@ public final class TransactionHistoryController {
         this.verifier = verifier;
         // Initialize cache
         this.cache = cache;
-        GuavaCacheMetrics.monitor(meterRegistry, this.cache, "Guava");
         // Initialize transaction processor.
         this.ledgerReader = reader;
         LOGGER.debug("Initialized transaction processor");

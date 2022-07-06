@@ -30,14 +30,6 @@ import bleach
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from db import UserDb
 
-from opentelemetry import trace
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.propagate import set_global_textmap
-from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-from opentelemetry.propagators.cloud_trace_propagator import CloudTraceFormatPropagator
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-
 
 def create_app():
     """Flask application factory to create instances
@@ -90,7 +82,8 @@ def create_app():
             __validate_new_user(req)
             # Check if user already exists
             if users_db.get_user(req['username']) is not None:
-                raise NameError('user {} already exists'.format(req['username']))
+                raise NameError(
+                    'user {} already exists'.format(req['username']))
 
             # Create password hash with salt
             app.logger.debug("Creating password hash.")
@@ -154,7 +147,8 @@ def create_app():
 
         # Verify username contains only 2-15 alphanumeric or underscore characters
         if not re.match(r"\A[a-zA-Z0-9_]{2,15}\Z", req['username']):
-            raise UserWarning('username must contain 2-15 alphanumeric characters or underscores')
+            raise UserWarning(
+                'username must contain 2-15 alphanumeric characters or underscores')
         # Check if passwords match
         if not req['password'] == req['password-repeat']:
             raise UserWarning('passwords do not match')
@@ -188,7 +182,8 @@ def create_app():
                 raise PermissionError('invalid login')
 
             full_name = '{} {}'.format(user['firstname'], user['lastname'])
-            exp_time = datetime.utcnow() + timedelta(seconds=app.config['EXPIRY_SECONDS'])
+            exp_time = datetime.utcnow() + \
+                timedelta(seconds=app.config['EXPIRY_SECONDS'])
             payload = {
                 'user': username,
                 'acct': user['accountid'],
@@ -197,7 +192,8 @@ def create_app():
                 'exp': exp_time,
             }
             app.logger.debug('Creating jwt token.')
-            token = jwt.encode(payload, app.config['PRIVATE_KEY'], algorithm='RS256')
+            token = jwt.encode(
+                payload, app.config['PRIVATE_KEY'], algorithm='RS256')
             app.logger.info('Login Successful.')
             return jsonify({'token': token}), 200
 
@@ -220,24 +216,12 @@ def create_app():
     app.logger.handlers = logging.getLogger('gunicorn.error').handlers
     app.logger.setLevel(logging.getLogger('gunicorn.error').level)
     app.logger.info('Starting userservice.')
-
-    # Set up tracing and export spans to Cloud Trace.
-    if os.environ['ENABLE_TRACING'] == "true":
-        app.logger.info("✅ Tracing enabled.")
-        # Set up tracing and export spans to Cloud Trace
-        trace.set_tracer_provider(TracerProvider())
-        cloud_trace_exporter = CloudTraceSpanExporter()
-        trace.get_tracer_provider().add_span_processor(
-            BatchSpanProcessor(cloud_trace_exporter)
-        )
-        set_global_textmap(CloudTraceFormatPropagator())
-        FlaskInstrumentor().instrument_app(app)
-    else:
-        app.logger.info("🚫 Tracing disabled.")
+    app.logger.info("🚫 Tracing disabled.")
 
     app.config['VERSION'] = os.environ.get('VERSION')
     app.config['EXPIRY_SECONDS'] = int(os.environ.get('TOKEN_EXPIRY_SECONDS'))
-    app.config['PRIVATE_KEY'] = open(os.environ.get('PRIV_KEY_PATH'), 'r').read()
+    app.config['PRIVATE_KEY'] = open(
+        os.environ.get('PRIV_KEY_PATH'), 'r').read()
     app.config['PUBLIC_KEY'] = open(os.environ.get('PUB_KEY_PATH'), 'r').read()
 
     # Configure database connection

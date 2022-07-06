@@ -29,16 +29,6 @@ import jwt
 from flask import Flask, abort, jsonify, make_response, redirect, \
     render_template, request, url_for
 
-from opentelemetry import trace
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.propagate import set_global_textmap
-from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-from opentelemetry.propagators.cloud_trace_propagator import CloudTraceFormatPropagator
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.instrumentation.jinja2 import Jinja2Instrumentor
-
 
 # pylint: disable-msg=too-many-locals
 def create_app():
@@ -90,7 +80,8 @@ def create_app():
         token = request.cookies.get(app.config['TOKEN_NAME'])
         if not verify_token(token):
             # user isn't authenticated
-            app.logger.debug('User isn\'t authenticated. Redirecting to login page.')
+            app.logger.debug(
+                'User isn\'t authenticated. Redirecting to login page.')
             return redirect(url_for('login_page',
                                     _external=True,
                                     _scheme=app.config['SCHEME']))
@@ -105,7 +96,8 @@ def create_app():
         try:
             url = '{}/{}'.format(app.config["BALANCES_URI"], account_id)
             app.logger.debug('Getting account balance.')
-            response = requests.get(url=url, headers=hed, timeout=app.config['BACKEND_TIMEOUT'])
+            response = requests.get(
+                url=url, headers=hed, timeout=app.config['BACKEND_TIMEOUT'])
             if response:
                 balance = response.json()
         except (requests.exceptions.RequestException, ValueError) as err:
@@ -115,7 +107,8 @@ def create_app():
         try:
             url = '{}/{}'.format(app.config["HISTORY_URI"], account_id)
             app.logger.debug('Getting transaction history.')
-            response = requests.get(url=url, headers=hed, timeout=app.config['BACKEND_TIMEOUT'])
+            response = requests.get(
+                url=url, headers=hed, timeout=app.config['BACKEND_TIMEOUT'])
             if response:
                 transaction_list = response.json()
         except (requests.exceptions.RequestException, ValueError) as err:
@@ -125,7 +118,8 @@ def create_app():
         try:
             url = '{}/{}'.format(app.config["CONTACTS_URI"], username)
             app.logger.debug('Getting contacts.')
-            response = requests.get(url=url, headers=hed, timeout=app.config['BACKEND_TIMEOUT'])
+            response = requests.get(
+                url=url, headers=hed, timeout=app.config['BACKEND_TIMEOUT'])
             if response:
                 contacts = response.json()
         except (requests.exceptions.RequestException, ValueError) as err:
@@ -172,7 +166,8 @@ def create_app():
         # Populate the 'accountLabel' field. If no match found, default to None.
         for trans in transactions:
             if trans['toAccountNum'] == account_id:
-                trans['accountLabel'] = contact_map.get(trans['fromAccountNum'])
+                trans['accountLabel'] = contact_map.get(
+                    trans['fromAccountNum'])
             elif trans['fromAccountNum'] == account_id:
                 trans['accountLabel'] = contact_map.get(trans['toAccountNum'])
 
@@ -189,7 +184,8 @@ def create_app():
         token = request.cookies.get(app.config['TOKEN_NAME'])
         if not verify_token(token):
             # user isn't authenticated
-            app.logger.error('Error submitting payment: user is not authenticated.')
+            app.logger.error(
+                'Error submitting payment: user is not authenticated.')
             return abort(401)
         try:
             account_id = decode_token(token)['acct']
@@ -251,7 +247,8 @@ def create_app():
         token = request.cookies.get(app.config['TOKEN_NAME'])
         if not verify_token(token):
             # user isn't authenticated
-            app.logger.error('Error submitting deposit: user is not authenticated.')
+            app.logger.error(
+                'Error submitting deposit: user is not authenticated.')
             return abort(401)
         try:
             # get account id from token
@@ -355,7 +352,8 @@ def create_app():
         token = request.cookies.get(app.config['TOKEN_NAME'])
         if verify_token(token):
             # already authenticated
-            app.logger.debug('User already authenticated. Redirecting to /home')
+            app.logger.debug(
+                'User already authenticated. Redirecting to /home')
             return redirect(url_for('home',
                                     _external=True,
                                     _scheme=app.config['SCHEME']))
@@ -367,7 +365,8 @@ def create_app():
                                pod_zone=pod_zone,
                                message=request.args.get('msg', None),
                                default_user=os.getenv('DEFAULT_USERNAME', ''),
-                               default_password=os.getenv('DEFAULT_PASSWORD', ''),
+                               default_password=os.getenv(
+                                   'DEFAULT_PASSWORD', ''),
                                bank_name=os.getenv('BANK_NAME', 'Bank of Anthos'))
 
     @app.route('/login', methods=['POST'])
@@ -412,7 +411,8 @@ def create_app():
         token = request.cookies.get(app.config['TOKEN_NAME'])
         if verify_token(token):
             # already authenticated
-            app.logger.debug('User already authenticated. Redirecting to /home')
+            app.logger.debug(
+                'User already authenticated. Redirecting to /home')
             return redirect(url_for('home',
                                     _external=True,
                                     _scheme=app.config['SCHEME']))
@@ -487,13 +487,15 @@ def create_app():
     def format_timestamp_day(timestamp):
         """ Format the input timestamp day in a human readable way """
         # TODO: time zones?
-        date = datetime.datetime.strptime(timestamp, app.config['TIMESTAMP_FORMAT'])
+        date = datetime.datetime.strptime(
+            timestamp, app.config['TIMESTAMP_FORMAT'])
         return date.strftime('%d')
 
     def format_timestamp_month(timestamp):
         """ Format the input timestamp month in a human readable way """
         # TODO: time zones?
-        date = datetime.datetime.strptime(timestamp, app.config['TIMESTAMP_FORMAT'])
+        date = datetime.datetime.strptime(
+            timestamp, app.config['TIMESTAMP_FORMAT'])
         return date.strftime('%b')
 
     def format_currency(int_amount):
@@ -520,7 +522,8 @@ def create_app():
         os.environ.get('CONTACTS_API_ADDR'))
     app.config['PUBLIC_KEY'] = open(os.environ.get('PUB_KEY_PATH'), 'r').read()
     app.config['LOCAL_ROUTING'] = os.getenv('LOCAL_ROUTING_NUM')
-    app.config['BACKEND_TIMEOUT'] = 4  # timeout in seconds for calls to the backend
+    # timeout in seconds for calls to the backend
+    app.config['BACKEND_TIMEOUT'] = 4
     app.config['TOKEN_NAME'] = 'token'
     app.config['TIMESTAMP_FORMAT'] = '%Y-%m-%dT%H:%M:%S.%f%z'
     app.config['SCHEME'] = os.environ.get('SCHEME', 'http')
@@ -553,7 +556,8 @@ def create_app():
         if req.ok:
             pod_zone = str(req.text.split("/")[3])
     except (RequestException, HTTPError) as err:
-        app.logger.warning(f"Unable to retrieve zone from metadata server {metadata_server}.")
+        app.logger.warning(
+            f"Unable to retrieve zone from metadata server {metadata_server}.")
 
     # register formater functions
     app.jinja_env.globals.update(format_currency=format_currency)
@@ -564,22 +568,7 @@ def create_app():
     app.logger.handlers = logging.getLogger('gunicorn.error').handlers
     app.logger.setLevel(logging.getLogger('gunicorn.error').level)
     app.logger.info('Starting frontend service.')
-
-    # Set up tracing and export spans to Cloud Trace.
-    if os.environ['ENABLE_TRACING'] == "true":
-        app.logger.info("✅ Tracing enabled.")
-        trace.set_tracer_provider(TracerProvider())
-        cloud_trace_exporter = CloudTraceSpanExporter()
-        trace.get_tracer_provider().add_span_processor(
-            BatchSpanProcessor(cloud_trace_exporter)
-        )
-        set_global_textmap(CloudTraceFormatPropagator())
-        # Add tracing auto-instrumentation for Flask, jinja and requests
-        FlaskInstrumentor().instrument_app(app)
-        RequestsInstrumentor().instrument()
-        Jinja2Instrumentor().instrument()
-    else:
-        app.logger.info("🚫 Tracing disabled.")
+    app.logger.info("🚫 Tracing disabled.")
 
     return app
 
